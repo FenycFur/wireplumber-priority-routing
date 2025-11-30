@@ -37,12 +37,6 @@
 log = Log.open_topic ("s-custom")
 local config = ... or {}
 
-function list_kv(tab)
-  for key, value in pairs(tab) do
-    print(key .. ": " .. tostring(value))
-  end
-end
-
 print('a')
 list_kv(sm-settings)
 print('a')
@@ -75,6 +69,8 @@ end
 --
 
 
+
+
 -- carla_mic_input = ObjectManager {
 --   Interest {
 --     type = "node",
@@ -88,6 +84,8 @@ end
 -- virtual_mic_input = ObjectManager {
 --   Interest {
 --     type = "node",
+
+
 --     Constraint { "node.name", "matches", "Virt. Mic", type = "pw" }
 -- }}
 --

@@ -1,0 +1,23 @@
+devices:
+  - name: carla_mic_input
+    selector_fieldname: node.name
+    selector_value: "Gain - Mic - Condenser Boundary"
+  - name: zoom_interface_source
+    selector_fieldname: node.name
+    selector_value: "alsa_input.usb-ZOOM_Corporation_H4essential-00.pro-input-0"
+  - name: virt_mic
+    selector_fieldname: node.name
+    selector_value: "Virt. Mic"
+links:
+  - name: "physical_mic_to_virtual"
+    src_dev: zoom_interface_source
+    src_port: "capture_AUX2"
+    - prio: 0
+      name: "Carla Input"
+      dest_dev: carla_condensor_input
+      dest_port: "input"
+    - prio: 1
+      name: "Direct to Virtual Mic"
+      dest_dev: virt_mic
+      dest_port: "Virt. Mic: input_0"
+
