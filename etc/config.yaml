@@ -12,6 +12,7 @@ links:
   - name: "physical_mic_to_virtual"
     src_dev: zoom_interface_source
     src_port: "capture_AUX2"
+    options:
     - prio: 0
       name: "Carla Input"
       dest_dev: carla_condensor_input

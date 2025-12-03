@@ -1,8 +1,25 @@
 #!/usr/bin/env lua
 
-local sources = {"lib/script/linking-mic2.lua", "lib/utils/debug.lua"}
-local config = "etc/config.yaml"
-local output = io.open("dist/monolith.lua", "w")
+-- Source files
+--- Source lua, concatenated in reverse order
+local filepaths_source = {"lib/script/linking-mic2.lua", "lib/utils/debug.lua"}
+--- Yaml config file
+local filepath_config = "etc/config.yaml"
+--- Output filename
+local filepath_output = "dist/monolith.lua"
+
+--[[
+https://stackoverflow.com/a/41350070
+]]
+local function reversedipairsiter(t, i)
+    i = i - 1
+    if i ~= 0 then
+        return i, t[i]
+    end
+end
+function reversedipairs(t)
+    return reversedipairsiter, t, #t + 1
+end
 
 local function read_file(path)
     local f = assert(io.open(path))
@@ -16,13 +33,16 @@ Convert yaml configuration to LUA code.
 ]]
 local function serialize_config(config_path)
     local yaml = require("yaml")
-    local config = yaml.load(read_file(config_path))
+    local config = yaml.eval(read_file(config_path))
     -- serialize config to Lua table literal
-    return "local CONFIG = " .. serpent.block(config)
+    local serpent = require("serpent")
+    return "config = " .. serpent.block(config)
 end
 
-output:write(serialize_config(config), "\n\n")
-for _, src in ipairs(sources) do
+os.remove(filepath_output)
+output = io.open(filepath_output, "w")
+output:write(serialize_config(filepath_config), "\n\n")
+for _, src in reversedipairs(filepaths_source) do
     output:write("-- ", src, "\n")
     output:write(read_file(src), "\n\n")
 end

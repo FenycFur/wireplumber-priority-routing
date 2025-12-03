@@ -1,57 +1,9 @@
--- requirements: lua-yaml
--- config_filepath = "~/.config/wireplumber/main.lua.d/config.yaml"
---
--- yaml = require("yaml")
--- om = ObjectManager {
---   Interest{ type = "node" },
---   Interest{ type = "port" },
---   Interest{ type = "link" }
--- }
--- om:activate()
---
--- -- configuration
--- devices = {}
--- links = {}
---
--- -- Load configuration from file
--- function read_config(filepath)
---   local file = io.open(filepath, "r")
---   if not file then
---     error ("Could not open config file: " .. filepath)
---   end
---   local content = file:read("*all")
---   file:close()
---   return yaml.parse(content)
--- end
--- function load_config(filepath)
---   local config = read_config(filepath)
---   for device in config['devices'] do
---     devices['device']['name'] = device
---     print(device)
---     print(device['name'])
---   end
--- end
---
--- load_config(config_filepath)
 
 log = Log.open_topic ("s-custom")
-local config = ... or {}
-
-print('a')
-list_kv(sm-settings)
-print('a')
--- Access your settings
-local my_setting = config["my_setting"] or "default value"
-local device_name = config["device_name"] or "Default Device"
-local threshold = config["threshold"] or 0
-local my_list = config["my_list"] or {}
-local nested_config = config["nested_config"] or {}
 
 -- Use the configuration
 print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-log:info(string.format("my_setting: %s", my_setting))
-log:info(string.format("device_name: %s", device_name))
-log:info(string.format("threshold: %d", threshold))
+log:info(string.format("%s", config["devices"][1]["name"]))
 print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
 
 -- Iterate over list items
