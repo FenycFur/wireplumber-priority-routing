@@ -1,44 +1,21 @@
-
+--[[
+Main script
+]]
 log = Log.open_topic ("s-custom")
 
--- Use the configuration
-print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-log:info(string.format("%s", config["devices"][1]["name"]))
-print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-
--- Iterate over list items
-for i, item in ipairs(my_list) do
-    Log.info(string.format("List item %d: %s", i, item))
-end
-
--- Access nested configuration
-if nested_config["key1"] then
-    Log.info(string.format("key1: %s", nested_config["key1"]))
-end
-
-
--- Record expected device configuration
---
-
-
-
+-- -- Iterate over list items
+-- for i, item in ipairs(my_list) do
+--   Log.info(string.format("List item %d: %s", i, item))
+-- end
+-- -- Access nested configuration
+-- if nested_config["key1"] then
+--   Log.info(string.format("key1: %s", nested_config["key1"]))
+-- end
 
 -- carla_mic_input = ObjectManager {
 --   Interest {
 --     type = "node",
 --     Constraint { "node.name", "matches", "Gain - Mic - Condenser Boundary", type = "pw" }
--- }}
--- zoom_device = ObjectManager {
---   Interest {
---     type = "node",
---     Constraint { "node.name", "matches", "alsa_input.usb-ZOOM_Corporation_H4essential-00.pro-input-0", type = "pw" }
--- }}
--- virtual_mic_input = ObjectManager {
---   Interest {
---     type = "node",
-
-
---     Constraint { "node.name", "matches", "Virt. Mic", type = "pw" }
 -- }}
 --
 --
@@ -53,31 +30,6 @@ end
 --   print("carla_in = false")
 --   update_routing()
 -- end)
---
--- zoom_device:connect("object-added", function(_, node)
---   zoom_out = true
---   zoom_node = node
---   print("zoom_device = true")
---   update_routing()
--- end)
--- zoom_device:connect("object-removed", function(_, node)
---   zoom_out = false
---   print("zoom_device = false")
---   update_routing()
--- end)
---
--- virtual_mic_input:connect("object-added", function(_, node)
---   virt_in = true
---   virt_node = node
---   print("virt_in = true")
---   update_routing()
--- end)
--- virtual_mic_input:connect("object-removed", function(_, node)
---   virt_in = false
---   print("virt_in = false")
---   update_routing()
--- end)
-
 
 function link_ports(source_node, source_port, target_node, target_port)
   local link = Link("link-factory", {
@@ -92,16 +44,25 @@ function link_ports(source_node, source_port, target_node, target_port)
   return link
 end
 
-
 function get_port_name(port_id)
-    for port in om:iterate {type = "port"} do
-        if port.properties["object.id"] == tostring(port_id) then
-            return port.properties["port.name"]
-        end
+  for port in om:iterate {type = "port"} do
+    if port.properties["object.id"] == tostring(port_id) then
+      return port.properties["port.name"]
     end
-    return nil
+  end
+  return nil
 end
 
+function main()
+  managed_objects = {}
+  for _, device in ipairs(config['devices']) do
+    log:info(string.format("%s", device["name"]))
+    log:info(string.format("%s", device["selector_fieldname"]))
+    log:info(string.format("%s", device["selector_value"]))
+  end
+end
+
+main()
 
 -- function update_routing()
 --   if not zoom_out then

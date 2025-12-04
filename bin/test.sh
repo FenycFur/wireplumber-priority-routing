@@ -1,10 +1,17 @@
 #!/bin/bash
 # Test configuration
 
+# Config
 PROJ_ROOT=$(dirname $(dirname "${BASH_SOURCE[0]}") )
 WP_DEFAULT_SCRIPT_DIR="$HOME/.local/share/wireplumber/scripts/" # TODO: configurable?
 WP_CONFIG_DIR="$HOME/.config/wireplumber/wireplumber.conf.d/"
 PROJ_DIST_DIR="${PROJ_ROOT}/dist"
+BUILT_SCRIPT_FILENAME='monolith.lua'
+#
+# Strings
+CMD_VALID_TEST_METHODS=('service' 'wpexec')
+USAGE="test.sh, takes one command from ${CMD_VALID_TEST_METHODS[@]}\n"
+
 
 function create_dir() {
     local dirname=$1
@@ -68,15 +75,91 @@ function mk_symlink() {
     return $ret
 }
 
+function rm_symlink() {
+    local symlink_path=$1
+    if [ ! -f "${symlink_path}" ]; then
+        echo "Tried to delete non-existent path: '${symlink_path}'"
+        return 1
+    fi
+    if [ ! -L "${symlink_path}" ]; then
+        echo "Tried to delete non-symlink path: '${symlink_path}'"
+        return 1
+    fi
+    rm "${symlink_path}"
+}
 
+contains() {
+    local search="$1"
+    shift
+    local arr=("$@")
+    for item in "${arr[@]}"; do
+        [[ "$item" == "$search" ]] && return 0
+    done
+    return 1
+}
+
+function install() {
+    mk_symlink \
+        $(realpath "${PROJ_ROOT}/dist/${BUILT_SCRIPT_FILENAME}") \
+        "${WP_DEFAULT_SCRIPT_DIR}"
+    if [ ! $? -eq 0 ]; then return 1; fi
+    mk_symlink \
+        $(realpath "${PROJ_ROOT}/lib/wireplumber/wireplumber.conf.d/99-my-script.conf") \
+        "${WP_CONFIG_DIR}"
+    if [ ! $? -eq 0 ]; then return 1; fi
+}
+function uninstall() {
+    rm_symlink \
+        "${WP_DEFAULT_SCRIPT_DIR}/${BUILT_SCRIPT_FILENAME}"
+    if [ ! $? -eq 0 ]; then return 1; fi
+    rm_symlink \
+        "${WP_CONFIG_DIR}/99-my-script.conf"
+    if [ ! $? -eq 0 ]; then return 1; fi
+}
+function test_service() {
+    local wp_up=$(is_Uservice_running wireplumber)
+    if [ $wp_up -eq 0 ]; then
+        echo 'Error: wireplumber.service is running in user context. Consider stopping it.'
+        return 1
+    fi
+    echo 'Installing.'
+    install && echo 'Success' || echo 'Failure.'
+    printf '\n\n'
+
+    # Without tee, script will quit.
+    wireplumber 2>&1 | tee /dev/null
+
+    printf '\nUninstalling.\n'
+    uninstall && echo 'Success' || echo 'Failure'
+}
+function test_wpexec() {
+    local wp_up=$(is_Uservice_running wireplumber)
+    if [ ! $wp_up -eq 0 ]; then
+        echo 'Error: wireplumber.service must be running in user context. Consider starting it.'
+        return 1
+    fi
+    printf 'Starting.\n\n'
+
+    # does this need a tee if wpexec fails or returns nonzero?
+    wpexec "dist/${BUILT_SCRIPT_FILENAME}"
+}
 
 function main() {
     # Exit on error
     set -e
-    # if [[ $# -eq 0 ]]; then
-    #     echo "No search terms were provided."
-    #     exit 1
-    # fi
+    if [[ $# -eq 0 ]]; then
+        printf "${USAGE}"
+        exit 1
+    fi
+    # service // needs better naming, starts wireplumber executable outside systemctl
+    # wpexec // starts script using script interpreter
+    local test_method=$1
+    if ! contains "${test_method}" "${CMD_VALID_TEST_METHODS[@]}"; then
+        echo "test_method needs to contain one of '${CMD_VALID_TEST_METHODS[@]}'.";
+        return 1
+    fi
+
+    # Create directories in wireplumber-recognized directories.
     setup_dirs
 
     lua "${PROJ_ROOT}/bin/build.lua"
@@ -84,22 +167,18 @@ function main() {
         echo 'Error: lua had an error building monolith.';
         exit 1;
     fi
+    echo 'Info: lua built the monolith.'
 
-    mk_symlink \
-        $(realpath "${PROJ_ROOT}/dist/monolith.lua") \
-        "${WP_DEFAULT_SCRIPT_DIR}"
-    if [ ! $? -eq 0 ]; then exit 1; fi
-    mk_symlink \
-        $(realpath "${PROJ_ROOT}/lib/wireplumber/wireplumber.conf.d/99-my-script.conf") \
-        "${WP_CONFIG_DIR}"
-    if [ ! $? -eq 0 ]; then exit 1; fi
-
-    local wp_up=$(is_Uservice_running wireplumber)
-    if [ $wp_up -eq 0 ]; then
-        echo 'Error: wireplumber.service is running in user context. Consider disabling it.'
-        return 1
-    fi
-    WIREPLUMBER_DEBUG='s-custom:T' wireplumber 2>&1
+    export WIREPLUMBER_DEBUG='s-custom:T'
+    case "${test_method}" in
+        'service')
+            test_service
+            ;;
+        'wpexec')
+            test_wpexec
+            ;;
+    esac
+    # err checking?
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
