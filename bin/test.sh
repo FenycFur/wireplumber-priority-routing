@@ -65,10 +65,10 @@ function mk_symlink() {
     if [ -L "${link_dst}" ]; then
         rm -f "${link_dst}";
     fi
-
+    
     ln -s "${real_src}" "${link_dst}"
     ret=$?
-
+    
     if [ ! $ret -eq 0 ]; then
         echo "Error: failed to create link '${real_src}' -> '${link_dst}'"
     fi
@@ -122,15 +122,19 @@ function test_service() {
         echo 'Error: wireplumber.service is running in user context. Consider stopping it.'
         return 1
     fi
-    echo 'Installing.'
+    echo 'Debug: Installing.'
     install && echo 'Success' || echo 'Failure.'
     printf '\n\n'
 
     # Without tee, script will quit.
-    wireplumber 2>&1 | tee /dev/null
-
-    printf '\nUninstalling.\n'
-    uninstall && echo 'Success' || echo 'Failure'
+    if command -v unbuffer; then
+        unbuffer wireplumber 2>&1 | tee
+    else
+        wireplumber 2>&1 | tee
+    fi
+    
+    printf '\nDebug: Uninstalling.\n'
+    uninstall && echo 'Info: Success' || echo 'Error: Failure'
 }
 function test_wpexec() {
     local wp_up=$(is_Uservice_running wireplumber)
@@ -138,10 +142,17 @@ function test_wpexec() {
         echo 'Error: wireplumber.service must be running in user context. Consider starting it.'
         return 1
     fi
-    printf 'Starting.\n\n'
+    printf 'Info: Starting.\n\n'
 
     # does this need a tee if wpexec fails or returns nonzero?
-    wpexec "dist/${BUILT_SCRIPT_FILENAME}"
+    # unbuffer is needed to trick wpexec into coloring stderr when piped.
+    ## https://man.archlinux.org/man/unbuffer.1.en
+    if command -v unbuffer; then
+        unbuffer wpexec "dist/${BUILT_SCRIPT_FILENAME}" 2>&1 | bin/mapper.lua
+    else
+        echo 'Warn: Missing non-critical command: 'unbuffer' (extra/expect) is needed to pass stderr w/ color.'
+        wpexec "dist/${BUILT_SCRIPT_FILENAME}" | tee
+    fi
 }
 
 function main() {
@@ -162,9 +173,9 @@ function main() {
     # Create directories in wireplumber-recognized directories.
     setup_dirs
 
-    lua "${PROJ_ROOT}/bin/build.lua"
+    lua "${PROJ_ROOT}/bin/bundle.lua"
     if [ ! $? -eq 0 ]; then
-        echo 'Error: lua had an error building monolith.';
+        echo 'Error: lua had an error bundling monolith.';
         exit 1;
     fi
     echo 'Info: lua built the monolith.'
