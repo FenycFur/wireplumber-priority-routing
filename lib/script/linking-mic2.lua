@@ -53,12 +53,58 @@ function get_port_name(port_id)
   return nil
 end
 
+function update_routing(action, node)
+  log:info(string.format("%s %s", action, node))
+end
+
+function new_managed_object(fieldname, value)
+  local managed_obj = ObjectManager{
+    Interest {
+      type = "node",
+      Constraint {
+        fieldname, "matches",
+        value,      type = "pw"
+      }
+  }}
+  managed_obj:connect("object-added", function(_, node)
+    -- print(device.name .. 'added')
+    update_routing('add', node)
+  end)
+  managed_obj:connect("object-removed", function(_, node)
+    -- print(device.name .. 'removed')
+    update_routing('remove', node)
+  end)
+  -- Don't forget to :activate()
+  return managed_obj
+end
+
 function main()
+  om = ObjectManager {
+    Interest{ type = "node" },
+    Interest{ type = "port" },
+    Interest{ type = "link" }
+  }
+  om:activate()
+
   managed_objects = {}
   for _, device in ipairs(config['devices']) do
     log:info(string.format("%s", device["name"]))
     log:info(string.format("%s", device["selector_fieldname"]))
     log:info(string.format("%s", device["selector_value"]))
+    log:info('')
+    managed_obj = new_managed_object(
+      device.selector_fieldname,
+      device.selector_value
+    )
+    managed_obj:activate()
+    table.insert(
+      managed_objects,
+      { name=device.name,
+        sel_fieldname=device.selector_fieldname,
+        sel_value=device.selector_value,
+        mgd_obj=managed_obj
+      }
+    )
   end
 end
 

@@ -1,0 +1,6 @@
+[1;93mW 20:22:43.039895 [1;35m             wplua [1;34m../wireplumber/modules/module-lua-scripting/wplua/wplua.c:65:_wplua_errhandler:[0m attempt to index a nil value
+stack traceback:
+	[C]: in for iterator 'for iterator'
+	[string "monolith.lua"]:58: in main chunk
+	[C]: in ?
+Lua runtime error

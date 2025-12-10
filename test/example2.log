@@ -1,0 +1,9 @@
+[1;32mI 20:22:20.609091 [1;35m          s-custom [1;34mmonolith.lua:110:main:[0m carla_mic_input
+[1;32mI 20:22:20.609116 [1;35m          s-custom [1;34mmonolith.lua:111:main:[0m node.name
+[1;32mI 20:22:20.609119 [1;35m          s-custom [1;34mmonolith.lua:112:main:[0m Gain - Mic - Condenser Boundary
+[1;32mI 20:22:20.609122 [1;35m          s-custom [1;34mmonolith.lua:110:main:[0m zoom_interface_source
+[1;32mI 20:22:20.609125 [1;35m          s-custom [1;34mmonolith.lua:111:main:[0m node.name
+[1;32mI 20:22:20.609128 [1;35m          s-custom [1;34mmonolith.lua:112:main:[0m alsa_input.usb-ZOOM_Corporation_H4essential-00.pro-input-0
+[1;32mI 20:22:20.609132 [1;35m          s-custom [1;34mmonolith.lua:110:main:[0m virt_mic
+[1;32mI 20:22:20.609134 [1;35m          s-custom [1;34mmonolith.lua:111:main:[0m node.name
+[1;32mI 20:22:20.609136 [1;35m          s-custom [1;34mmonolith.lua:112:main:[0m Virt. Mic

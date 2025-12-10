@@ -5,6 +5,7 @@
 PROJ_ROOT=$(dirname $(dirname "${BASH_SOURCE[0]}") )
 WP_DEFAULT_SCRIPT_DIR="$HOME/.local/share/wireplumber/scripts/" # TODO: configurable?
 WP_CONFIG_DIR="$HOME/.config/wireplumber/wireplumber.conf.d/"
+WP_CONFIG_SCRIPT='lib/wireplumber/wireplumber.conf.d/99-my-script.conf'
 PROJ_DIST_DIR="${PROJ_ROOT}/dist"
 BUILT_SCRIPT_FILENAME='monolith.lua'
 #
@@ -21,16 +22,10 @@ function create_dir() {
     fi
     # if dir doesn't exist
     if [ ! -e "${dirname}" ]; then
-        # TODO: what if something before $dirname exists and is a file, and a dir cannot be made?
         mkdir -p "${dirname}"
         return $?
     fi
-    # if the dir was made
-    if [ -d "${dirname}" ]; then
-        return 0
-    fi
-
-    echo "'${dirname}' exists and is not a directory! Cannot proceed."
+    return 0
 }
 
 function setup_dirs() {
@@ -65,10 +60,10 @@ function mk_symlink() {
     if [ -L "${link_dst}" ]; then
         rm -f "${link_dst}";
     fi
-    
+
     ln -s "${real_src}" "${link_dst}"
     ret=$?
-    
+
     if [ ! $ret -eq 0 ]; then
         echo "Error: failed to create link '${real_src}' -> '${link_dst}'"
     fi
@@ -104,7 +99,7 @@ function install() {
         "${WP_DEFAULT_SCRIPT_DIR}"
     if [ ! $? -eq 0 ]; then return 1; fi
     mk_symlink \
-        $(realpath "${PROJ_ROOT}/lib/wireplumber/wireplumber.conf.d/99-my-script.conf") \
+        $(realpath "${PROJ_ROOT}/${WP_CONFIG_SCRIPT}") \
         "${WP_CONFIG_DIR}"
     if [ ! $? -eq 0 ]; then return 1; fi
 }
@@ -144,14 +139,13 @@ function test_wpexec() {
     fi
     printf 'Info: Starting.\n\n'
 
-    # does this need a tee if wpexec fails or returns nonzero?
     # unbuffer is needed to trick wpexec into coloring stderr when piped.
     ## https://man.archlinux.org/man/unbuffer.1.en
     if command -v unbuffer; then
         unbuffer wpexec "dist/${BUILT_SCRIPT_FILENAME}" 2>&1 | bin/mapper.lua
     else
         echo 'Warn: Missing non-critical command: 'unbuffer' (extra/expect) is needed to pass stderr w/ color.'
-        wpexec "dist/${BUILT_SCRIPT_FILENAME}" | tee
+        wpexec "dist/${BUILT_SCRIPT_FILENAME}" | bin/mapper.lua
     fi
 }
 
